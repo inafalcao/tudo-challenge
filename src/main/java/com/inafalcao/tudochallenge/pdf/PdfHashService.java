@@ -1,5 +1,6 @@
-package com.inafalcao.tudochallenge;
+package com.inafalcao.tudochallenge.pdf;
 
+import org.apache.tomcat.util.http.fileupload.IOUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -17,45 +18,41 @@ public class PdfHashService {
     @Value("#{systemProperties['user.dir']}")
     private String homeDir;
 
-    @Value("#{tudo.pdf.default.location}")
+    @Value("${tudo.pdf.default.location}")
     private String pdfDir;
 
-    @Value("#{tudo.pdf.name.convention}")
+    @Value("${tudo.pdf.name.convention}")
     private String pdfName;
 
     private String hash;
 
-    /**
-     *
-     * @param byteArray
-     * @return
-     */
-    public String hash(byte[] byteArray) {
+    public PdfHashService pdf(InputStream in) {
 
         final String PDF_NAME = String.format(pdfName, hash);
 
+        // Taking advantage of the Closeable interface :)
         try(OutputStream out = new FileOutputStream(PDF_NAME)) {
-            out.write(byteArray);
+
+            IOUtils.copy(in, out);
+
         } catch (IOException e) {
-            e.printStackTrace();
+            e.printStackTrace(); // todo:
         }
 
-        return hash;
+        return this;
 
     }
 
-
-    public PdfHashService using(String cpf, String ip) {
-        final String FILE_PATH_FORMATER = "%s/%s/%s";
+    public String using(String key) {
+        final String FILE_PATH_FORMATTER = "%s/%s/%s";
 
         // todo: get a hash
         this.hash = "get a hash";
 
-        final String path = String.format(FILE_PATH_FORMATER, homeDir, pdfDir, this.hash);
+        final String path = String.format(FILE_PATH_FORMATTER, homeDir, pdfDir, this.hash);
 
         // save
-
-        return this;
+        return this.hash;
     }
 
 }
