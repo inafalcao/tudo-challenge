@@ -1,10 +1,12 @@
 package com.inafalcao.tudochallenge.pdf;
 
+import com.inafalcao.tudochallenge.commons.Files;
 import org.apache.tomcat.util.http.fileupload.IOUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.*;
+import java.nio.file.Paths;
 
 /**
  * This class is responsible for converting the file byte array to
@@ -15,44 +17,35 @@ import java.io.*;
 @Service
 public class PdfHashService {
 
-    @Value("#{systemProperties['user.dir']}")
+    @Value("#{systemProperties['user.home']}")
     private String homeDir;
 
-    @Value("${tudo.pdf.default.location}")
+    @Value("${pdf.default.location}")
     private String pdfDir;
 
-    @Value("${tudo.pdf.name.convention}")
+    @Value("${pdf.name.convention}")
     private String pdfName;
 
     private String hash;
 
-    public PdfHashService pdf(InputStream in) {
+    public String pdf(InputStream in) {
 
-        final String PDF_NAME = String.format(pdfName, hash);
+        final String PATH_FORMATTER = "%s/%s";
+        final String PDF_PATH = String.format(PATH_FORMATTER, homeDir, pdfDir);
 
-        // Taking advantage of the Closeable interface :)
-        try(OutputStream out = new FileOutputStream(PDF_NAME)) {
+        Files.createIfNotExists(Paths.get(PDF_PATH));
 
-            IOUtils.copy(in, out);
+        final String PDF_NAME = PDF_PATH + this.hash + ".pdf";
 
-        } catch (IOException e) {
-            e.printStackTrace(); // todo:
-        }
+        PdfHelper.markHashInPdf(PDF_NAME, this.hash, in);
 
-        return this;
+        return this.hash;
 
     }
 
-    public String using(String key) {
-        final String FILE_PATH_FORMATTER = "%s/%s/%s";
-
-        // todo: get a hash
-        this.hash = "get a hash";
-
-        final String path = String.format(FILE_PATH_FORMATTER, homeDir, pdfDir, this.hash);
-
-        // save
-        return this.hash;
+    public PdfHashService using(String hash) {
+        this.hash = hash;
+        return this;
     }
 
 }

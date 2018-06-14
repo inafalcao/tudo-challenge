@@ -1,9 +1,7 @@
 package com.inafalcao.tudochallenge.hash;
 
 import org.springframework.util.DigestUtils;
-
 import java.util.Arrays;
-import java.util.stream.Collectors;
 
 public class Hasher {
 
@@ -13,8 +11,7 @@ public class Hasher {
      * @return
      */
     public static String from(String ... keys) {
-        StringBuilder stringBuilder = new StringBuilder();
-        String toHash = Arrays.stream(keys).map(stringBuilder::append).collect(Collectors.joining());
+        String toHash = String.join("", Arrays.asList(keys));
         return DigestUtils.md5DigestAsHex(toHash.getBytes());
     }
 

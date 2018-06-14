@@ -1,17 +1,24 @@
 package com.inafalcao.tudochallenge.pdf;
 
+import com.inafalcao.tudochallenge.exception.TudoChallengeException;
 import com.inafalcao.tudochallenge.hash.Hasher;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import javax.servlet.http.HttpServletRequest;
+import java.io.IOException;
 import java.io.InputStream;
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
+
+import static com.inafalcao.tudochallenge.commons.Dates.today;
 
 @RestController
 public class PdfHashController {
 
     private PdfHashService hash;
+
+    public PdfHashController(PdfHashService hash) {
+        this.hash = hash;
+    }
 
     @PostMapping(
             path = "/pdf-hash/{cpf}"
@@ -19,27 +26,23 @@ public class PdfHashController {
     public String hashPdf(
             @RequestParam("file") MultipartFile file,
             @PathVariable String cpf,
-            HttpServletRequest request) {
+            HttpServletRequest request) throws TudoChallengeException { // todo: make error handler
 
+        // todo: validations (cpf, file empty)
+
+        InputStream pdf;
         try {
 
-            final String ip = request.getRemoteAddr();
-            InputStream pdf = file.getInputStream();
-            hash.pdf(pdf).using(Hasher.from(ip, today(), cpf));
+            pdf = file.getInputStream();
 
-        } catch(Exception ex) {
-            // TODO
-            return "";
+        } catch(IOException ex) {
+            throw new TudoChallengeException(); // todo: set reason. error reading uploaded file input stream.
         }
 
-        return "";
+        final String ip = request.getRemoteAddr();
+        final String hashKey  = Hasher.from(ip, today(), cpf); // todo: compose with a concat function.
+        return hash.using(hashKey).pdf(pdf);
 
-    }
-
-    private static String today() {
-        LocalDate today = LocalDate.now();
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("ddMMYYYHH");
-        return today.format(formatter);
     }
 
 }
